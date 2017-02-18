@@ -1,0 +1,7 @@
+{
+  "name": "vatsimradar",
+  "short_name": "vatsimradar",
+  "description": "Live Vatsim Activity Map",
+  "start_url": "/",
+  "display": "standalone"
+}
