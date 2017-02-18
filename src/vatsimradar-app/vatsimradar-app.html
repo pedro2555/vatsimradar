@@ -17,6 +17,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 -->
 
 <link rel="import" href="../../bower_components/polymer/polymer.html">
+<link rel="import" href="../../bower_components/google-map/google-map.html">
+<link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
 <dom-module id="vatsimradar-app">
   <template>
@@ -24,8 +26,36 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       :host {
         display: block;
       }
+
+      google-map {
+        position: absolute;
+        top: 0;
+        bottom: 0;
+        left: 0;
+        right: 0;
+      }
     </style>
-    <h2>[[prop1]]</h2>
+
+    <iron-ajax
+          auto
+          id="ajax"
+          url="https://jsonp.afeld.me/?url=http://api.vateud.net/online/pilots/lppt.json"
+          handle-as="json"
+          last-response="{{pilots}}"
+          on-response="handleResponse"
+          debounce-duration="300"></iron-ajax>
+
+    <google-map
+          fit-to-marker
+          maps-url="http://maps.google.cn/maps/api/js?callback=%%callback%%"
+          api-key="AIzaSyDj4y39JAORYGw4rNcA1y8oVj0m8lNDje4">
+
+      <template is="dom-repeat" items="[[pilots]]">
+        <google-map-marker latitude="[[item.latitude]]" longitude="[[item.longitude]]"
+            draggable="false" title="[[item.callsign]]" icon="./light-aircraft.png"></google-map-marker>
+        </google-map>
+      </template>
+
   </template>
 
   <script>
@@ -39,6 +69,11 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
           value: 'vatsimradar-app',
         },
       },
+      handleResponse: function() {
+        this.async(function() {
+          this.$.ajax.generateRequest();
+        }, 10000);
+      }
 
     });
   </script>
