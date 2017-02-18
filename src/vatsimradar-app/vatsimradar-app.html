@@ -39,22 +39,24 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     <iron-ajax
           auto
           id="ajax"
-          url="https://jsonp.afeld.me/?url=http://api.vateud.net/online/pilots/lppt.json"
+          url="{{pilotsUrl}}"
           handle-as="json"
           last-response="{{pilots}}"
-          on-response="handleResponse"
-          debounce-duration="300"></iron-ajax>
+          on-response="handleResponse"></iron-ajax>
 
     <google-map
           fit-to-marker
-          maps-url="http://maps.google.cn/maps/api/js?callback=%%callback%%"
-          api-key="AIzaSyDj4y39JAORYGw4rNcA1y8oVj0m8lNDje4">
+          api-key="AIzaSyDj4y39JAORYGw4rNcA1y8oVj0m8lNDje4"
+          latitude="40.0955474"
+          longitude="-3.070306"
+          zoom="4">
 
       <template is="dom-repeat" items="[[pilots]]">
         <google-map-marker latitude="[[item.latitude]]" longitude="[[item.longitude]]"
             draggable="false" title="[[item.callsign]]" icon="./light-aircraft.png"></google-map-marker>
-        </google-map>
       </template>
+
+    </google-map>
 
   </template>
 
@@ -64,15 +66,17 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       is: 'vatsimradar-app',
 
       properties: {
-        prop1: {
+        pilotsUrl: {
           type: String,
-          value: 'vatsimradar-app',
+          value: 'https://jsonp.afeld.me/?url=http://api.vateud.net/online/pilots/lp,me.json',
         },
       },
       handleResponse: function() {
         this.async(function() {
+          //console.log(this.$.ajax.url);
+          this.$.ajax.url = this.pilotsUrl + '?' + Math.random();
           this.$.ajax.generateRequest();
-        }, 10000);
+        }, 5000);
       }
 
     });
