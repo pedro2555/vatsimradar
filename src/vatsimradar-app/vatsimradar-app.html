@@ -20,6 +20,8 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
 <link rel="import" href="../../bower_components/google-map/google-map.html">
 <link rel="import" href="../../bower_components/iron-ajax/iron-ajax.html">
 
+<link rel="import" href="../vatsimradar-client-map-marker/vatsimradar-client-map-marker.html">
+
 <dom-module id="vatsimradar-app">
   <template>
     <style>
@@ -39,21 +41,23 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
     <iron-ajax
           auto
           id="ajax"
-          url="{{pilotsUrl}}"
+          url="{{_getClientURL()}}"
           handle-as="json"
-          last-response="{{pilots}}"
+          last-response="{{clients}}"
           on-response="handleResponse"></iron-ajax>
 
     <google-map
+          additional-map-options='{"mapTypeId":"satellite"}'
+          disable-default-ui
           fit-to-marker
           api-key="AIzaSyDj4y39JAORYGw4rNcA1y8oVj0m8lNDje4"
           latitude="40.0955474"
           longitude="-3.070306"
-          zoom="4">
+          zoom="4"
+          id="map">
 
-      <template is="dom-repeat" items="[[pilots]]">
-        <google-map-marker latitude="[[item.latitude]]" longitude="[[item.longitude]]"
-            draggable="false" title="[[item.callsign]]" icon="./light-aircraft.png"></google-map-marker>
+      <template is="dom-repeat" items="[[clients._items]]">
+        <google-map-marker latitude="{{_getLatitudeFromLocation(item.location)}}" longitude="{{_getLongitudeFromLocation(item.location)}}" draggable="false" title="{{item.callsign}} - {{item.realname}}" icon="unkown-xpdr.png"></google-map-marker>
       </template>
 
     </google-map>
@@ -66,19 +70,62 @@ Foundation, Inc., 51 Franklin Street, Fifth Floor, Boston, MA  02110-1301, USA.
       is: 'vatsimradar-app',
 
       properties: {
-        pilotsUrl: {
-          type: String,
-          value: 'https://jsonp.afeld.me/?url=http://api.vateud.net/online/callsign/tsz.json',
-        },
       },
       handleResponse: function() {
         this.async(function() {
-          //console.log(this.$.ajax.url);
-          this.$.ajax.url = this.pilotsUrl + '?' + Math.random();
-          this.$.ajax.generateRequest();
+          try {
+            //console.log(this.$.ajax.url);
+            this.$.ajax.url = this._getClientURL();
+            this.$.ajax.generateRequest();
+          } catch(err) {
+            console.log(err);
+          }
         }, 5000);
-      }
+      },
+      _getMapCenterLatitude: function() {
+        if (this.$.map.map) {
+          return this.$.map.map.getCenter().lat();
+        } else {
+          return 0;
+        }
+      },
+      _getMapCenterLongitude: function() {
+        if (this.$.map.map) {
+          return this.$.map.map.getCenter().lng();
+        } else {
+          return 0;
+        }
+      },
+      _getMapViewRadius: function() {
+        if (this.$.map.map) {
 
+          var bounds = this.$.map.map.getBounds();
+          var center = this.$.map.map.getCenter();
+          if (bounds && center) {
+            var ne = bounds.getNorthEast();
+            return google.maps.geometry.spherical.computeDistanceBetween(center, ne);
+          }
+          return 0;
+        } else {
+          return 0;
+        }
+      },
+      _getLatitudeFromLocation: function(location) {
+        return parseFloat(location.toString().split(',')[1]);
+      },
+      _getLongitudeFromLocation: function(location) {
+        return parseFloat(location.toString().split(',')[0]);
+      },
+      _getClientURL: function() {
+        try {
+          //return 'http://localhost:5000/clients?where={"location":{"$near":{"$geometry":{"type":"Point","coordinates":[long,lat]},"$maxDistance":range}}}'.replace('lat', this._getMapCenterLatitude()).replace('long', this._getMapCenterLongitude()).replace('range', parseInt(this._getMapViewRadius()) * 1.2)
+          return 'https://vatsim-status-proxy.herokuapp.com/clients?where={"location":{"$near":{"$geometry":{"type":"Point","coordinates":[long,lat]},"$maxDistance":range}}}'.replace('lat', this._getMapCenterLatitude()).replace('long', this._getMapCenterLongitude()).replace('range', parseInt(this._getMapViewRadius()) * 1.2)
+        } catch(err) {
+          console.log(err);
+          //return 'http://localhost:5000/clients'
+          return 'https://vatsim-status-proxy.herokuapp.com/clients'
+        } 
+      }
     });
   </script>
 </dom-module>
